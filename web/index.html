@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f2">
+  <meta name="description" content="A little friend, a quieter moment. Care for your Tama Buddy.">
+  <title>Tama Buddy · a little life to love</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M19 4C8 3 3 7 5 14c7 4 14-1 14-10Z"/><path d="M4 21 15 10M9 16v-5"/></symbol>
+      <symbol id="i-food" viewBox="0 0 24 24"><path d="M3 11h18c0 6-3 9-9 9s-9-3-9-9ZM8 4v3m4-4v4m4-3v3M6 21h12"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5 6c8 1 12 5 13 12M6 19C7 11 12 7 19 6"/></symbol>
+      <symbol id="i-clean" viewBox="0 0 24 24"><path d="M13 3C10 7 6 11 6 15a6 6 0 0 0 12 0c0-4-3-8-5-12Z"/><path d="M9 15c0 2 1 3 3 3M3 4v4M1 6h4M20 6v4m-2-2h4"/></symbol>
+      <symbol id="i-sleep" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12Z"/><path d="M18 3v4m-2-2h4"/></symbol>
+      <symbol id="i-health" viewBox="0 0 24 24"><path d="M12 21S2 15 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 7-10 13-10 13Z"/><path d="M9 12h6m-3-3v6"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3ZM4 2v4M2 4h4"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    </defs>
+  </svg>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Tama Buddy home"><span class="brand-icon"><svg><use href="#i-leaf"/></svg></span>tama buddy<span class="brand-period">.</span></a>
+      <span class="header-note">a little life to love</span>
+      <span class="connection" id="connection" role="status" data-state="connecting"><span class="status-dot"></span><span id="connection-label">Connecting</span></span>
+    </header>
+
+    <main>
+      <div class="intro">
+        <div><p class="eyebrow"><span></span> A SMALL MOMENT, JUST FOR YOU</p><h1>A happy little place.</h1><p class="intro-copy">Slow down. Say hello. Make your buddy’s day.</p></div>
+        <div class="today-note"><svg class="icon"><use href="#i-spark"/></svg><span>Little things.<br><strong>Lovely friendships.</strong></span></div>
+      </div>
+
+      <div class="dashboard">
+        <section class="habitat-card" aria-labelledby="home-title">
+          <div class="card-heading"><h2 id="home-title">Your buddy’s home</h2><span class="small-tag" id="stage">A little world</span></div>
+          <div class="habitat" id="habitat" data-mood="loading" role="img" aria-label="Connecting to your buddy">
+            <span class="habitat-label"><span class="tiny-dot"></span> HOME, SWEET HOME</span>
+            <svg class="landscape" viewBox="0 0 600 330" fill="none" aria-hidden="true">
+              <circle cx="483" cy="71" r="28" fill="#eddca6"/>
+              <g stroke="#e0c779" stroke-width="2" stroke-linecap="round"><path d="M483 29v-6m0 96v-6m42-42h6m-96 0h6m72-30 5-5m-70 70 5-5m60 0 5 5m-70-70 5 5"/></g>
+              <path d="M65 90c0-14 20-20 29-8 4-23 37-25 44-3 18-5 30 15 16 23H77c-8 0-12-5-12-12Z" fill="#fcfdf7" opacity=".8"/>
+              <path d="M372 127c-1-11 15-16 22-7 6-17 28-15 32 1 14-2 22 11 13 17h-54c-8 0-13-4-13-11Z" fill="#fcfdf7" opacity=".6"/>
+              <path d="M0 285c122-59 230-13 331-11 120 2 191-40 269-10v66H0Z" fill="#dce6cf"/>
+              <path d="M0 310c120-21 186 8 294-3 126-13 200-16 306 0v23H0Z" fill="#d2dfc1"/>
+              <g stroke="#9ab282" stroke-width="2.5" stroke-linecap="round"><path d="m81 279-3-9m3 9 5-7m420 10-3-11m3 11 5-7M119 313l-3-7m3 7 4-6m319-1-3-9m3 9 5-7"/></g>
+              <g fill="#f6f1d4"><circle cx="134" cy="275" r="3"/><circle cx="465" cy="296" r="3"/><circle cx="52" cy="309" r="2"/></g>
+            </svg>
+            <div class="buddy-shadow"></div>
+            <div class="buddy-character" id="character">
+              <svg class="buddy" viewBox="0 0 240 240" aria-hidden="true">
+                <g class="cat-body" stroke="#435443" stroke-width="3.5" stroke-linejoin="round">
+                  <path d="M65 181c-24 10-35-8-23-21 4-4 9 0 7 5-3 8 8 7 15 2" fill="#b9cd91"/>
+                  <ellipse cx="85" cy="204" rx="22" ry="10" fill="#c8dca7"/>
+                  <ellipse cx="153" cy="204" rx="22" ry="10" fill="#c8dca7"/>
+                  <path d="M58 105 62 44c1-9 6-10 13-3l29 29c12-3 25-3 37 0l30-29c7-7 12-5 13 4l2 59c16 19 19 40 14 66-5 27-30 39-79 39-45 0-70-14-75-39-5-24-1-46 12-65Z" fill="#c8dca7"/>
+                  <path d="m71 58 19 23-21 9Z" fill="#dfb9a8" stroke="none"/><path d="m174 58-20 23 23 9Z" fill="#dfb9a8" stroke="none"/>
+                  <ellipse cx="122" cy="176" rx="36" ry="26" fill="#e3ebca" stroke="none"/>
+                  <path d="M64 157c-5 15-3 25 6 28m108-28c5 15 3 25-6 28" fill="none"/>
+                </g>
+                <g class="awake-eyes" fill="#435443"><ellipse cx="91" cy="118" rx="5" ry="7"/><ellipse cx="153" cy="118" rx="5" ry="7"/><circle cx="93" cy="116" r="1.5" fill="#fff"/><circle cx="155" cy="116" r="1.5" fill="#fff"/></g>
+                <g class="sleep-eyes" fill="none" stroke="#435443" stroke-width="3.5" stroke-linecap="round"><path d="M83 120q8 7 16 0m46 0q8 7 16 0"/></g>
+                <g class="dead-eyes" fill="none" stroke="#435443" stroke-width="3" stroke-linecap="round"><path d="m85 114 12 12m0-12-12 12m62-12 12 12m0-12-12 12"/></g>
+                <ellipse cx="75" cy="135" rx="12" ry="6" fill="#dcaaa1" opacity=".75"/><ellipse cx="169" cy="135" rx="12" ry="6" fill="#dcaaa1" opacity=".75"/>
+                <path d="m118 130 4 3 4-3m-4 3c0 9-10 10-11 3m11-3c0 9 10 10 11 3" stroke="#435443" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <g class="sleep-z" fill="#65775b" font-family="Georgia,serif" font-weight="bold"><text x="192" y="64" font-size="21">z</text><text x="214" y="40" font-size="29">z</text></g>
+              </svg>
+            </div>
+            <svg class="egg" viewBox="0 0 160 190" aria-hidden="true"><ellipse cx="80" cy="176" rx="45" ry="7" fill="#a6b995" opacity=".3"/><path d="M24 115C24 65 62 16 80 16s56 49 56 99c0 35-23 59-56 59s-56-24-56-59Z" fill="#fcf9e8" stroke="#657454" stroke-width="3"/><path d="m26 114 19-9 15 13 21-14 19 14 18-13 17 10" stroke="#c6ceac" stroke-width="3" fill="none"/><ellipse cx="60" cy="80" rx="7" ry="11" fill="#d0dcb9" transform="rotate(22 60 80)"/><ellipse cx="101" cy="143" rx="10" ry="8" fill="#d0dcb9"/></svg>
+            <span class="scene-caption" id="scene-caption">Something lovely is waiting.</span>
+          </div>
+          <div class="buddy-details"><div><div class="name-line"><h3 id="pet-name">Finding your buddy…</h3><span class="life-stage" id="life-stage" hidden></span></div><p id="pet-description">A little friendship is just around the corner.</p></div><span class="mood-pill" id="mood" hidden></span></div>
+          <div class="growth-panel" id="growth-panel" hidden><div class="growth-label"><span id="growth-label">Growing together</span><span id="growth-time"></span></div><progress id="growth-progress" max="100" value="0" aria-label="Progress to the next growth stage"></progress><div class="growth-stages"><span>Baby</span><span>Child</span><span>Teen</span><span>Adult</span></div></div>
+          <form id="hatch-form" class="hatch-form" hidden>
+            <label for="pet-name-input">What should we call your buddy?</label>
+            <div class="input-row"><input id="pet-name-input" name="name" placeholder="Mochi" autocomplete="off" aria-describedby="name-hint"><button class="primary-button" type="submit" id="hatch-button">Hatch a buddy <svg class="icon"><use href="#i-arrow"/></svg></button></div>
+            <div class="form-bottom"><span id="name-hint">Up to 20 characters. Leave blank for Mochi.</span><button id="cancel-hatch" class="text-button" type="button" hidden>Go back</button></div>
+          </form>
+          <div class="farewell" id="farewell" hidden><p>A little life, always remembered. Ready for a new beginning?</p><button id="new-egg" class="primary-button" type="button">Welcome a new buddy <svg class="icon"><use href="#i-arrow"/></svg></button></div>
+        </section>
+
+        <section class="wellbeing-card" aria-labelledby="wellbeing-title"><div class="card-heading"><h2 id="wellbeing-title">A little check-in</h2><svg class="icon heading-icon"><use href="#i-leaf"/></svg></div><p class="section-copy">Little acts of care go a long way.</p>
+          <div id="stats" class="stats">
+            <div class="stat" data-stat="fullness"><div class="stat-icon food"><svg class="icon"><use href="#i-food"/></svg></div><div class="stat-content"><div class="stat-label"><label for="stat-fullness">Fullness</label><span id="value-fullness">—</span></div><progress id="stat-fullness" max="100" value="0"></progress></div></div>
+            <div class="stat" data-stat="happiness"><div class="stat-icon joy"><svg class="icon"><use href="#i-spark"/></svg></div><div class="stat-content"><div class="stat-label"><label for="stat-happiness">Happiness</label><span id="value-happiness">—</span></div><progress id="stat-happiness" max="100" value="0"></progress></div></div>
+            <div class="stat" data-stat="energy"><div class="stat-icon energy"><svg class="icon"><use href="#i-sleep"/></svg></div><div class="stat-content"><div class="stat-label"><label for="stat-energy">Energy</label><span id="value-energy">—</span></div><progress id="stat-energy" max="100" value="0"></progress></div></div>
+            <div class="stat" data-stat="hygiene"><div class="stat-icon clean"><svg class="icon"><use href="#i-clean"/></svg></div><div class="stat-content"><div class="stat-label"><label for="stat-hygiene">Hygiene</label><span id="value-hygiene">—</span></div><progress id="stat-hygiene" max="100" value="0"></progress></div></div>
+            <div class="stat" data-stat="health"><div class="stat-icon health"><svg class="icon"><use href="#i-health"/></svg></div><div class="stat-content"><div class="stat-label"><label for="stat-health">Health</label><span id="value-health">—</span></div><progress id="stat-health" max="100" value="0"></progress></div></div>
+          </div>
+          <div class="care-tip"><svg class="icon"><use href="#i-leaf"/></svg><p id="care-tip">Your buddy’s wellbeing will appear here once you connect.</p></div>
+          <div class="bond-panel" id="bond-panel" hidden><div class="growth-label"><label for="bond-progress" id="bond-level">Bond level 1</label><span id="bond-points">0 / 40</span></div><progress id="bond-progress" max="40" value="0"></progress><p id="bond-description">Every helpful care action brings you closer.</p></div>
+        </section>
+      </div>
+
+      <section class="care-section" aria-labelledby="care-title"><div class="section-heading"><h2 id="care-title">Make a little moment</h2><span id="care-note">A little love, one action at a time.</span></div>
+        <div class="actions" id="actions">
+          <button type="button" data-action="feed" disabled><span class="action-icon food"><svg class="icon"><use href="#i-food"/></svg></span><span class="action-label">Feed</span><span class="action-description">A happy tummy</span></button>
+          <button type="button" data-action="play" disabled><span class="action-icon joy"><svg class="icon"><use href="#i-play"/></svg></span><span class="action-label">Play</span><span class="action-description">A little fun</span></button>
+          <button type="button" data-action="clean" disabled><span class="action-icon clean"><svg class="icon"><use href="#i-clean"/></svg></span><span class="action-label">Clean</span><span class="action-description">Fresh &amp; fluffy</span></button>
+          <button type="button" data-action="sleep" disabled><span class="action-icon energy"><svg class="icon"><use href="#i-sleep"/></svg></span><span class="action-label" id="sleep-label">Sleep</span><span class="action-description" id="sleep-description">Sweet dreams</span></button>
+          <button type="button" data-action="medicine" disabled><span class="action-icon health"><svg class="icon"><use href="#i-health"/></svg></span><span class="action-label">Medicine</span><span class="action-description">Feel better</span></button>
+        </div>
+        <div class="message-box" role="status" aria-live="polite"><svg class="icon"><use href="#i-spark"/></svg><p id="message">Getting your little world ready…</p><span class="message-decoration" aria-hidden="true">✧</span></div>
+      </section>
+
+      <section class="achievements-section" id="achievements-section" aria-labelledby="achievements-title" hidden><div class="section-heading"><h2 id="achievements-title">Growing together</h2><span id="achievement-summary">Little milestones, lasting memories.</span></div><div class="achievement-grid" id="achievements"></div></section>
+
+      <section class="memories-section" aria-labelledby="memories-title"><div class="section-heading"><h2 id="memories-title">Little memories</h2><span>The moments that make a friendship.</span></div><ol id="memories" class="memories"><li class="empty-memory">Your story is just beginning.</li></ol></section>
+    </main>
+    <footer><span><svg class="icon"><use href="#i-leaf"/></svg> A little care makes a lovely life.</span><span id="save-note">Your little world, saved as you go.</span></footer>
+  </div>
+  <noscript><p class="noscript">Please enable JavaScript to connect to your buddy and use the care buttons.</p></noscript>
+</body>
+</html>
