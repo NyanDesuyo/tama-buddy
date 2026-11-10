@@ -12,6 +12,36 @@ let previousEvents = '';
 let generation = 0;
 let polling = false;
 let serverOffset = 0;
+let summaryBusy = false;
+let summaryKey = '';
+
+function statusKey(pet) {
+  return pet ? JSON.stringify([pet.name, pet.born, ...statNames.map((name) => pet[name]), pet.sleeping]) : '';
+}
+
+async function summarizeStatus() {
+  if (summaryBusy || busy || !online || !snapshot?.pet || snapshot.pet.health <= 0 || replacing) return;
+  summaryBusy = true;
+  const key = summaryKey;
+  $('pet-summary').hidden = true;
+  $('summary-status').dataset.error = 'false';
+  $('summary-status').textContent = 'Your buddy is thinking…';
+  updateControls();
+  try {
+    const result = await request('/api/pet/summary', {}, 65000);
+    if (key !== summaryKey) return;
+    $('pet-summary').textContent = result.summary;
+    $('pet-summary').hidden = false;
+    $('summary-status').textContent = `Your buddy’s feelings · Ollama (${result.model})`;
+  } catch (error) {
+    if (key !== summaryKey) return;
+    $('summary-status').dataset.error = 'true';
+    $('summary-status').textContent = error.status ? error.message : 'Could not reach Ollama for a summary. Check the backend and Ollama, then try again.';
+  } finally {
+    summaryBusy = false;
+    updateControls();
+  }
+}
 let careAnimationTimer = null;
 
 function stopCareAnimation() {
@@ -28,7 +58,6 @@ function animateCare(action) {
   careAnimationTimer = setTimeout(stopCareAnimation, 2600);
 }
 
-
 function tell(message, error = false) {
   $('message').textContent = message;
   $('message').parentElement.dataset.error = String(error);
@@ -41,13 +70,13 @@ function connection(connected) {
   $('save-note').textContent = connected ? 'Your little world, saved as you go.' : 'Offline. Trying to reconnect…';
 }
 
-async function request(path, body) {
+async function request(path, body, timeout = 5000) {
   const response = await fetch(path, {
     method: body === undefined ? 'GET' : 'POST',
     headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: 'no-store',
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(timeout),
   });
   const data = await response.json();
   if (!response.ok) {
@@ -78,6 +107,7 @@ function mood(pet) {
 function updateControls() {
   const pet = snapshot?.pet;
   const alive = pet && pet.health > 0;
+  $('summary-button').disabled = summaryBusy || busy || !online || !alive || replacing;
   const time = Math.floor(Date.now() / 1000 + serverOffset);
   const cooldown = pet ? Math.max(0, 5 - (time - pet.last_action)) : 0;
   for (const button of actionButtons) {
@@ -157,6 +187,14 @@ function render(data) {
   const alive = pet && pet.health > 0;
   if (alive) replacing = false;
   const nursery = !pet || replacing;
+  const nextSummaryKey = statusKey(pet);
+  if (summaryKey !== nextSummaryKey || nursery) {
+    summaryKey = nextSummaryKey;
+    $('pet-summary').hidden = true;
+    $('summary-status').dataset.error = 'false';
+    $('summary-status').textContent = 'Ask your buddy how they feel about their current wellbeing.';
+  }
+  $('summary-section').hidden = !alive || nursery;
   if (nursery || !alive) stopCareAnimation();
   $('hatch-form').hidden = !nursery;
   $('farewell').hidden = !pet || alive || replacing;
@@ -276,6 +314,8 @@ async function mutate(path, body) {
     updateControls();
   }
 }
+
+$('summary-button').addEventListener('click', summarizeStatus);
 
 for (const button of actionButtons) {
   button.addEventListener('click', () => mutate('/api/pet/actions', { action: button.dataset.action }));

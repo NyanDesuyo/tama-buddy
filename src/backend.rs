@@ -1,5 +1,5 @@
 use crate::{
-    api::{CareRequest, ErrorResponse, HatchRequest, Snapshot},
+    api::{CareRequest, ErrorResponse, HatchRequest, Snapshot, StatusSummary},
     now,
     store::Store,
 };
@@ -19,7 +19,12 @@ use std::{
 };
 use tokio::sync::watch;
 
-type SharedStore = Arc<Mutex<Store>>;
+#[derive(Clone)]
+struct SharedStore {
+    store: Arc<Mutex<Store>>,
+    dialogue: crate::ollama::Dialogue,
+    summary_gate: Arc<tokio::sync::Semaphore>,
+}
 struct ApiError(StatusCode, String);
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
@@ -60,7 +65,7 @@ async fn with_store<T: Send + 'static>(
     operation: impl FnOnce(&mut Store) -> Result<T, ApiError> + Send + 'static,
 ) -> Result<T, ApiError> {
     tokio::task::spawn_blocking(move || {
-        let mut store = state.lock().map_err(ApiError::internal)?;
+        let mut store = state.store.lock().map_err(ApiError::internal)?;
         operation(&mut store)
     })
     .await
@@ -68,14 +73,13 @@ async fn with_store<T: Send + 'static>(
 }
 
 async fn status(State(state): State<SharedStore>) -> Result<Json<Snapshot>, ApiError> {
-    with_store(state, |store| {
+    with_store(state.clone(), |store| {
         let time = now();
         let result = store.refresh(time).map_err(ApiError::internal)?;
-        snapshot(store, result, time)
-            .map(Json)
-            .map_err(ApiError::internal)
+        snapshot(store, result, time).map_err(ApiError::internal)
     })
     .await
+    .map(Json)
 }
 async fn hatch(
     State(state): State<SharedStore>,
@@ -90,7 +94,7 @@ async fn hatch(
         ));
     }
     let name = if name.is_empty() { "Mochi" } else { name }.to_owned();
-    with_store(state, move |store| {
+    with_store(state.clone(), move |store| {
         let time = now();
         if store
             .refresh(time)
@@ -104,18 +108,17 @@ async fn hatch(
             ));
         }
         let result = store.hatch(name, time).map_err(ApiError::internal)?;
-        snapshot(store, result, time)
-            .map(|s| (StatusCode::CREATED, Json(s)))
-            .map_err(ApiError::internal)
+        snapshot(store, result, time).map_err(ApiError::internal)
     })
     .await
+    .map(|snapshot| (StatusCode::CREATED, Json(snapshot)))
 }
 async fn care(
     State(state): State<SharedStore>,
     body: Result<Json<CareRequest>, JsonRejection>,
 ) -> Result<Json<Snapshot>, ApiError> {
     let Json(body) = body.map_err(ApiError::invalid)?;
-    with_store(state, move |store| {
+    with_store(state.clone(), move |store| {
         let time = now();
         let result = store.care(body.action, time).map_err(ApiError::internal)?;
         if result.0.is_none() {
@@ -124,11 +127,41 @@ async fn care(
                 "Hatch a buddy first.".into(),
             ));
         }
-        snapshot(store, result, time)
-            .map(Json)
-            .map_err(ApiError::internal)
+        snapshot(store, result, time).map_err(ApiError::internal)
     })
     .await
+    .map(Json)
+}
+
+async fn summarize(State(state): State<SharedStore>) -> Result<Json<StatusSummary>, ApiError> {
+    let _permit = state.summary_gate.try_acquire().map_err(|_| {
+        ApiError(
+            StatusCode::TOO_MANY_REQUESTS,
+            "Your buddy is already thinking. Try again shortly.".into(),
+        )
+    })?;
+    let (pet, time) = with_store(state.clone(), |store| {
+        let time = now();
+        let pet = store
+            .refresh(time)
+            .map_err(ApiError::internal)?
+            .0
+            .ok_or_else(|| ApiError(StatusCode::NOT_FOUND, "Hatch a buddy first.".into()))?;
+        if !pet.alive() {
+            return Err(ApiError(
+                StatusCode::CONFLICT,
+                "Your buddy has passed away. Hatch a new egg first.".into(),
+            ));
+        }
+        Ok((pet, time))
+    })
+    .await?;
+    // Release the SQLite lock before waiting for the model. Care stays available.
+    state.dialogue.summarize(&pet, time).await.map(Json).map_err(|error| {
+        eprintln!("Ollama summary failed: {error:#}");
+        ApiError(StatusCode::BAD_GATEWAY,
+            "Could not get a response from Ollama. Check that Ollama is running and the configured model is installed.".into())
+    })
 }
 fn router(state: SharedStore) -> Router {
     Router::new()
@@ -139,6 +172,7 @@ fn router(state: SharedStore) -> Router {
         .route("/health", get(|| async { Json("ok") }))
         .route("/api/pet", get(status).post(hatch))
         .route("/api/pet/actions", axum::routing::post(care))
+        .route("/api/pet/summary", axum::routing::post(summarize))
         .fallback(|| async { ApiError(StatusCode::NOT_FOUND, "Unknown API route.".into()) })
         .layer(DefaultBodyLimit::max(4096))
         .with_state(state)
@@ -146,7 +180,11 @@ fn router(state: SharedStore) -> Router {
 
 #[tokio::main]
 pub async fn run(path: &Path, address: SocketAddr) -> Result<()> {
-    let state = Arc::new(Mutex::new(Store::open(path)?));
+    let state = SharedStore {
+        store: Arc::new(Mutex::new(Store::open(path)?)),
+        dialogue: crate::ollama::Dialogue::from_env()?,
+        summary_gate: Arc::new(tokio::sync::Semaphore::new(1)),
+    };
     // Catch up once before serving requests, then keep advancing without a TUI.
     with_store(state.clone(), |s| {
         s.refresh(now()).map_err(ApiError::internal)

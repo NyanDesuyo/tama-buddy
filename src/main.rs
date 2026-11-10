@@ -1,6 +1,7 @@
 mod api;
 mod backend;
 mod client;
+mod ollama;
 mod pet;
 mod store;
 mod ui;
@@ -47,7 +48,7 @@ fn main() -> Result<()> {
     let mut server = false;
     let mut tui = false;
     let mut url = "http://127.0.0.1:3000".to_owned();
-    let mut bind: SocketAddr = "127.0.0.1:3000".parse()?;
+    let mut bind: SocketAddr = "0.0.0.0:3000".parse()?;
     let mut custom_db = false;
     let mut custom_url = false;
     let mut custom_bind = false;
@@ -84,7 +85,8 @@ Check status:  tama-buddy --status [--url http://127.0.0.1:3000]
 
 With no mode flag, the TUI opens by default.
 The backend owns SQLite and advances the simulation while the TUI is closed.
-Default bind: 127.0.0.1:3000
+Default bind: 0.0.0.0:3000 (all IPv4 interfaces)
+Local network: http://HOST_IP:3000 (use this computer's LAN IPv4 address)
 Default save: {}
 
 Controls: F feed · P play · C clean · S sleep/wake · M medicine

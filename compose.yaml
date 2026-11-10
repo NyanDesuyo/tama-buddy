@@ -5,6 +5,12 @@ services:
       - "${TAMA_BIND_IP:-0.0.0.0}:${TAMA_PORT:-3000}:3000"
     volumes:
       - pet-data:/data
+    environment:
+      TAMA_OLLAMA_URL: ${TAMA_OLLAMA_URL:-http://host.docker.internal:11434}
+      TAMA_OLLAMA_MODEL: ${TAMA_OLLAMA_MODEL:-qwen3.5:4b}
+      TAMA_OLLAMA_ENABLED: ${TAMA_OLLAMA_ENABLED:-true}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     init: true
     stop_grace_period: 15s

@@ -91,6 +91,49 @@ test('failed care does not animate, and a dead pet clears active effects', async
   assert.equal(ui.timers.size, 0);
 });
 
+test('summarizes only on request, shows loading and source, and clears after stats change', async () => {
+  const ui = await fixture(data({ fullness: 10 }, 'Welcome!'));
+  assert.equal(ui.calls.length, 1, 'Polling does not ask Ollama');
+  let finish;
+  ui.network.handler = () => new Promise((resolve) => { finish = resolve; });
+  const pending = ui.get('summary-button').listeners.click();
+  assert.equal(ui.get('summary-button').disabled, true);
+  assert.match(ui.get('summary-status').textContent, /thinking/);
+  assert.equal(ui.calls.at(-1).url, '/api/pet/summary');
+  assert.equal(ui.calls.at(-1).options.method, 'POST');
+  finish({ summary: '<b>My tummy needs a snack!</b>', model: 'qwen3.5:4b' });
+  await pending;
+  assert.equal(ui.get('pet-summary').textContent, '<b>My tummy needs a snack!</b>');
+  assert.equal(ui.get('pet-summary').hidden, false);
+  assert.match(ui.get('summary-status').textContent, /Ollama \(qwen3.5:4b\)/);
+  assert.equal(ui.get('message').textContent, 'Welcome!');
+  ui.network.handler = async () => data({ fullness: 10 });
+  await ui.run('poll()');
+  assert.equal(ui.get('pet-summary').hidden, false, 'Unchanged polls keep the summary');
+  ui.network.handler = async () => data({ fullness: 35 }, 'Yum!');
+  await ui.button('feed').listeners.click();
+  assert.equal(ui.get('pet-summary').hidden, true, 'A changed state needs a new summary');
+  assert.equal(ui.get('message').textContent, 'Yum!');
+});
+
+test('summary errors stay visible without disconnecting care; stale responses are ignored', async () => {
+  const ui = await fixture(data());
+  ui.network.handler = async () => { throw new Error('Ollama offline'); };
+  await ui.get('summary-button').listeners.click();
+  assert.equal(ui.get('summary-status').dataset.error, 'true');
+  assert.match(ui.get('summary-status').textContent, /Ollama/);
+  assert.equal(ui.button('feed').disabled, false);
+  assert.equal(ui.get('pet-summary').hidden, true);
+  let finish;
+  ui.network.handler = () => new Promise((resolve) => { finish = resolve; });
+  const pending = ui.get('summary-button').listeners.click();
+  ui.network.handler = async () => data({ energy: 10 });
+  await ui.run('poll()');
+  finish({ summary: 'I have lots of energy!', model: 'qwen3.5:4b' });
+  await pending;
+  assert.equal(ui.get('pet-summary').hidden, true);
+});
+
 test('hatches from the nursery, validates names, and renders names as text', async () => {
   const ui = await fixture({ pet: null, events: [], message: null, server_time: 1010 });
   assert.equal(ui.get('hatch-form').hidden, false);

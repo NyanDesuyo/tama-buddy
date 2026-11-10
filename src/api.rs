@@ -11,6 +11,12 @@ pub struct Snapshot {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct StatusSummary {
+    pub summary: String,
+    pub model: String,
+}
+
+#[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HatchRequest {
     pub name: String,

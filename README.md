@@ -28,7 +28,14 @@ cargo run --release -- --tui
 
 Running without a mode flag also opens the TUI.
 
-The backend listens on `http://127.0.0.1:3000` by default. It owns the SQLite
+The backend listens on `0.0.0.0:3000` (all IPv4 interfaces) by default, so
+`cargo run -- --server` also serves your local network. On another device on
+the same network, open `http://HOST_IP:3000`, replacing `HOST_IP` with this
+computer's LAN IPv4 address (use `ipconfig` on Windows to find it). Allow the
+app through Windows Firewall on private networks if prompted. You can still
+open `http://127.0.0.1:3000` on the host itself.
+
+It owns the SQLite
 save and advances the simulation once per ten real minutes, checking every second.
 The TUI reads state over HTTP once per second and sends care actions to the
 backend; it never opens SQLite. Multiple terminal clients can connect safely.
@@ -40,9 +47,9 @@ Closing a client leaves the backend running. Stop the backend with Ctrl+C or
 SIGTERM; all accepted actions are already committed.
 
 The backend currently manages **one shared pet**, with no accounts or
-authentication. Keep it on localhost for personal use. A custom `--bind` address
-is available for development on a trusted network; access control and TLS would
-be needed before deploying it publicly.
+authentication. Everyone on the network who can reach it shares that pet.
+Use `--bind 127.0.0.1:3000` for access only from this computer. Access control
+and TLS would be needed before deploying it publicly.
 
 Use a terminal at least **60 columns × 30 rows**. Enter a name on the nursery
 screen, or press Enter to call your buddy Mochi.
@@ -243,6 +250,48 @@ cargo run -- --help
 `--status`. `--status` requires a running backend. The TUI reports connection
 failures and polls again while open; care requests are not automatically retried.
 
+## Ollama status summary
+
+Ask your buddy how they feel using Ollama, with `qwen3.5:4b` by default.
+Start Ollama and download the model with `ollama pull qwen3.5:4b`, then start
+the backend as usual. Native hosting connects to `http://localhost:11434`.
+In the web UI, click **How are you feeling?** in **In your buddy’s words**.
+The panel shows when your buddy is thinking, then displays the generated
+sentence and the model that answered. Failures appear as errors so you can tell
+whether Ollama responded.
+
+The backend sends current fullness, energy, happiness, hygiene, health, sleep
+state, and growth stage to Ollama's
+[`POST /api/generate`](https://docs.ollama.com/api/generate), with `stream: false`
+and `think: false`. The prompt identifies low stats and asks for a short sentence
+in the pet's voice: a hungry buddy asks for food, a tired buddy asks for rest,
+and a content buddy sounds happy. Poor health takes priority. Generation happens
+only when requested, with one request at a time. Care and simulation remain
+available while waiting for Ollama. Changed stats clear the previous summary;
+click the button again for an updated response. Summaries do not change stats
+or add journal entries. The terminal client keeps its usual care messages.
+
+Optional environment variables (set before starting the backend):
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `TAMA_OLLAMA_URL` | `http://localhost:11434` | Ollama HTTP base URL |
+| `TAMA_OLLAMA_MODEL` | `qwen3.5:4b` | Installed model name |
+| `TAMA_OLLAMA_ENABLED` | `true` | Set to `false` to disable Ollama summaries |
+
+For example, in PowerShell:
+
+```powershell
+$env:TAMA_OLLAMA_MODEL = "qwen3.5:4b"
+cargo run -- --server
+```
+
+Docker Compose defaults to `http://host.docker.internal:11434` to reach Ollama
+on the host. Override `TAMA_OLLAMA_URL` in `.env` for Ollama on another host or
+container. Ollama must listen on an address reachable from that container;
+restrict access to your private network. Native hosting reads process environment
+variables; `.env` is used by Compose only.
+
 ## HTTP API
 
 | Method | Path | Request | Result |
@@ -251,6 +300,16 @@ failures and polls again while open; care requests are not automatically retried
 | GET | `/api/pet` | None | Current pet, recent events, and server time |
 | POST | `/api/pet` | `{"name":"Mochi"}` | Hatch first pet or replace a dead pet |
 | POST | `/api/pet/actions` | `{"action":"feed"}` | Apply a care action |
+| POST | `/api/pet/summary` | None | Ollama status summary: `{"summary":"My tummy is rumbling; could I have a snack?","model":"qwen3.5:4b"}` |
+
+Summary requests may take up to 60 seconds. They return 404 without a pet, 409
+for a dead pet, 429 when another summary is being generated, or 502 when Ollama
+is unavailable, disabled, or returns invalid output. Ordinary status polling
+and care actions never call Ollama.
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/pet/summary -Method Post -TimeoutSec 65
+```
 
 Supported actions: `feed`, `play`, `clean`, `sleep` (toggle), `medicine`.
 Names are trimmed, limited to 20 characters, and must have no control characters.
