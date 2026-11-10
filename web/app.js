@@ -12,6 +12,22 @@ let previousEvents = '';
 let generation = 0;
 let polling = false;
 let serverOffset = 0;
+let careAnimationTimer = null;
+
+function stopCareAnimation() {
+  clearTimeout(careAnimationTimer);
+  careAnimationTimer = null;
+  delete $('habitat').dataset.action;
+}
+
+function animateCare(action) {
+  stopCareAnimation();
+  // Restart even when the same action is used twice in a row.
+  void $('character').offsetWidth;
+  $('habitat').dataset.action = action;
+  careAnimationTimer = setTimeout(stopCareAnimation, 2600);
+}
+
 
 function tell(message, error = false) {
   $('message').textContent = message;
@@ -141,6 +157,7 @@ function render(data) {
   const alive = pet && pet.health > 0;
   if (alive) replacing = false;
   const nursery = !pet || replacing;
+  if (nursery || !alive) stopCareAnimation();
   $('hatch-form').hidden = !nursery;
   $('farewell').hidden = !pet || alive || replacing;
   $('cancel-hatch').hidden = !replacing;
@@ -244,6 +261,9 @@ async function mutate(path, body) {
     const data = await request(path, body);
     connection(true);
     render(data);
+    if (path === '/api/pet/actions' && data.pet?.health > 0) {
+      animateCare(body.action === 'sleep' && !data.pet.sleeping ? 'wake' : body.action);
+    }
   } catch (error) {
     if (error.status) {
       tell(error.message, true);

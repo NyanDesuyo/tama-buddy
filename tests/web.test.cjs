@@ -39,6 +39,8 @@ async function fixture(initial) {
   });
   const calls = [];
   const network = { handler: async () => initial };
+  const timers = new Map();
+  let timerId = 0;
   const context = vm.createContext({
     document: { hidden: false, getElementById: (id) => {
       assert.ok(elements.has(id), `Unknown HTML id: ${id}`);
@@ -46,6 +48,8 @@ async function fixture(initial) {
     }, querySelectorAll: (selector) => selector === '[data-action]' ? buttons : [], createElement: () => new Element(), addEventListener() {} },
     window: { addEventListener() {} }, AbortSignal, Date, console,
     setInterval() {},
+    setTimeout(handler) { timers.set(++timerId, handler); return timerId; },
+    clearTimeout(id) { timers.delete(id); },
     fetch: async (url, options) => {
       calls.push({ url, options });
       const result = await network.handler(url, options);
@@ -55,8 +59,37 @@ async function fixture(initial) {
   vm.runInContext(script, context);
   await flush();
   return { get: (id) => elements.get(id), button: (action) => buttons.find((b) => b.dataset.action === action),
-    network, calls, run: (code) => vm.runInContext(code, context) };
+    network, calls, timers, run: (code) => vm.runInContext(code, context) };
 }
+
+test('successful care animates each action and wake, then returns to idle', async () => {
+  const ui = await fixture(data());
+  for (const action of ['feed', 'play', 'clean', 'sleep', 'medicine']) {
+    ui.network.handler = async () => data({ sleeping: action === 'sleep' });
+    await ui.button(action).listeners.click();
+    assert.equal(ui.get('habitat').dataset.action, action);
+    assert.equal(ui.timers.size, 1, 'A new animation cancels the previous cleanup');
+  }
+  ui.network.handler = async () => data({ sleeping: false });
+  await ui.button('sleep').listeners.click();
+  assert.equal(ui.get('habitat').dataset.action, 'wake');
+  [...ui.timers.values()][0]();
+  assert.equal(ui.get('habitat').dataset.action, undefined);
+});
+
+test('failed care does not animate, and a dead pet clears active effects', async () => {
+  const ui = await fixture(data());
+  ui.network.handler = async () => { throw Object.assign(new Error('Please wait'), { status: 409 }); };
+  await ui.button('feed').listeners.click();
+  assert.equal(ui.get('habitat').dataset.action, undefined);
+  ui.network.handler = async () => data();
+  await ui.button('clean').listeners.click();
+  assert.equal(ui.get('habitat').dataset.action, 'clean');
+  ui.network.handler = async () => data({ health: 0 });
+  await ui.run('poll()');
+  assert.equal(ui.get('habitat').dataset.action, undefined);
+  assert.equal(ui.timers.size, 0);
+});
 
 test('hatches from the nursery, validates names, and renders names as text', async () => {
   const ui = await fixture({ pet: null, events: [], message: null, server_time: 1010 });
