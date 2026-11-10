@@ -60,6 +60,127 @@ screen, or press Enter to call your buddy Mochi.
 Care actions have a five-second cooldown; sleep/wake is immediate. Wake your
 buddy before feeding, playing, bathing, or giving medicine.
 
+## Host on another machine
+
+Copy or clone this repository onto the host. You can use Docker Compose, or
+build the Rust binary directly. Only the host needs to run the backend; other
+devices can open the web UI in a browser.
+
+### Docker Compose
+
+Install Docker Engine with the Compose plugin on the host, then run from the
+project directory:
+
+```sh
+docker compose up -d --build
+docker compose ps
+docker compose logs -f
+```
+
+Open `http://HOST_IP:3000` from another device, replacing `HOST_IP` with the
+host's IP address or hostname. Allow inbound TCP port 3000 through the host's
+firewall from your trusted network. The container runs as a non-root user and
+stores the pet in the named Docker volume `pet-data`, which survives container
+restarts, rebuilds, and `docker compose down`.
+
+To choose a different host port:
+
+```sh
+TAMA_PORT=8080 docker compose up -d --build
+```
+
+For access only from the host (for example, behind a reverse proxy running on
+the host), use `TAMA_BIND_IP=127.0.0.1 docker compose up -d --build`. You can also
+put `TAMA_PORT` and `TAMA_BIND_IP` in a local `.env` file so Compose remembers
+them. The container always listens on port 3000 internally.
+
+To update, copy or pull the updated source and run `docker compose up -d --build`
+again. Stop it with `docker compose down`. **Do not add `--volumes` unless you
+intend to delete the pet save.** Run one backend instance per save.
+
+The app has no accounts or authentication: everyone who can reach it can care
+for the same pet. For internet hosting, put it behind a reverse proxy with HTTPS
+and authentication, and restrict direct access to port 3000. The setup above is
+intended for a trusted private network.
+
+### Without Docker
+
+On the host, install stable Rust and a C compiler, then:
+
+```sh
+cargo build --release --locked
+./target/release/tama-buddy --server --bind 0.0.0.0:3000 --db ./data/pet.sqlite3
+```
+
+Open `http://HOST_IP:3000` from another device. Keep the process running using
+your host's service manager if it should start automatically after a reboot.
+The binary embeds all web assets and bundles SQLite; you can copy it to another
+machine with a compatible operating system, CPU architecture, and system
+libraries. Build on the destination machine when those differ.
+
+To connect the terminal client from another machine:
+
+```sh
+cargo run --release -- --url http://HOST_IP:3000
+```
+
+### Windows without Docker (PowerShell)
+
+Copy or clone the project onto Windows and open PowerShell in the project
+directory. Use a current stable Rust toolchain. The usual Windows MSVC toolchain
+also needs Visual Studio C++ Build Tools, including the C++ compiler and Windows
+SDK, because this project compiles bundled SQLite. See the
+[Rust Windows prerequisites](https://rust-lang.github.io/rustup/installation/windows-msvc.html)
+if the build reports a missing linker or C compiler. No separate SQLite or
+Node.js installation is required.
+
+```powershell
+cargo build --release --locked
+.\target\release\tama-buddy.exe --server --bind 0.0.0.0:3000 --db "$env:LOCALAPPDATA\tama-buddy\pet.sqlite3"
+```
+
+The save directory is created automatically. On the Windows host, open
+`http://localhost:3000`. On another device on the same private network, open
+`http://WINDOWS_IP:3000`; use `ipconfig` on Windows to find the active network
+adapter's IPv4 address. If Windows Firewall prompts, allow the app on private
+networks. For access only on the Windows host, use `--bind 127.0.0.1:3000` instead.
+
+Leave PowerShell open while hosting; stop the backend with Ctrl+C. Windows must
+stay awake for other devices to reach it. To restart, run the same `.exe` command
+with the same `--db` path; rebuilding is only necessary after source changes.
+
+To use the terminal UI, leave the backend running and open another PowerShell
+window in the project directory:
+
+```powershell
+.\target\release\tama-buddy.exe
+```
+
+### Move an existing pet
+
+Stop the old backend before copying its SQLite save (see the save locations
+below). For native hosting, copy it to the path supplied to `--db`. For Docker,
+place the stopped backend's save at `./pet.sqlite3`, then import it before
+starting the service:
+
+```sh
+docker compose build
+docker compose run --rm --no-deps --user 0 --cap-add DAC_OVERRIDE --cap-add CHOWN --entrypoint sh \
+  -v "$(pwd)/pet.sqlite3:/import/pet.sqlite3:ro" tama-buddy \
+  -c 'cp /import/pet.sqlite3 /data/pet.sqlite3 && chown 10001:10001 /data/pet.sqlite3'
+docker compose up -d
+```
+
+The import replaces the destination save. Keep the destination service stopped
+and back up any existing destination save first. To back up a Docker save, stop
+the service and copy the database out, then start it again:
+
+```sh
+docker compose stop
+docker compose cp tama-buddy:/data/pet.sqlite3 ./pet-backup.sqlite3
+docker compose start
+```
+
 ## A little life
 
 Stats change once per **ten real minutes** while the backend runs, even without

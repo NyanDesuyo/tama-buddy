@@ -1,0 +1,17 @@
+services:
+  tama-buddy:
+    build: .
+    ports:
+      - "${TAMA_BIND_IP:-0.0.0.0}:${TAMA_PORT:-3000}:3000"
+    volumes:
+      - pet-data:/data
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  pet-data:
