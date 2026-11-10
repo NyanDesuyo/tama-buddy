@@ -45,6 +45,7 @@ fn main() -> Result<()> {
     let mut path = default_path();
     let mut status = false;
     let mut server = false;
+    let mut tui = false;
     let mut url = "http://127.0.0.1:3000".to_owned();
     let mut bind: SocketAddr = "127.0.0.1:3000".parse()?;
     let mut custom_db = false;
@@ -59,6 +60,7 @@ fn main() -> Result<()> {
             }
             "--status" => status = true,
             "--server" => server = true,
+            "--tui" => tui = true,
             "--url" => {
                 url = args.next().context("--url requires a URL")?;
                 custom_url = true;
@@ -77,9 +79,10 @@ fn main() -> Result<()> {
 
 Start backend: tama-buddy --server [--db PATH] [--bind IP:PORT]
 Open web UI:   http://127.0.0.1:3000 in your browser
-Open TUI:      tama-buddy [--url http://127.0.0.1:3000]
+Open TUI:      tama-buddy --tui [--url http://127.0.0.1:3000]
 Check status:  tama-buddy --status [--url http://127.0.0.1:3000]
 
+With no mode flag, the TUI opens by default.
 The backend owns SQLite and advances the simulation while the TUI is closed.
 Default bind: 127.0.0.1:3000
 Default save: {}
@@ -93,6 +96,9 @@ Controls: F feed · P play · C clean · S sleep/wake · M medicine
             }
             _ => bail!("Unknown argument: {arg}. Use --help for usage."),
         }
+    }
+    if tui && (server || status) {
+        bail!("--tui cannot be combined with --server or --status");
     }
     if server {
         if status || custom_url {
@@ -135,7 +141,7 @@ Controls: F feed · P play · C clean · S sleep/wake · M medicine
                 p.care_points
             );
         } else {
-            println!("No buddy yet. Run cargo run to hatch your first egg.");
+            println!("No buddy yet. Run cargo run -- --tui to hatch your first egg.");
         }
         println!("Backend: {url}");
         return Ok(());

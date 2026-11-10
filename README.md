@@ -23,8 +23,10 @@ Rust binary, with no external fonts, scripts, or image downloads.
 You can also open the TUI in another terminal:
 
 ```sh
-cargo run --release
+cargo run --release -- --tui
 ```
+
+Running without a mode flag also opens the TUI.
 
 The backend listens on `http://127.0.0.1:3000` by default. It owns the SQLite
 save and advances the simulation once per ten real minutes, checking every second.
@@ -121,7 +123,7 @@ libraries. Build on the destination machine when those differ.
 To connect the terminal client from another machine:
 
 ```sh
-cargo run --release -- --url http://HOST_IP:3000
+cargo run --release -- --tui --url http://HOST_IP:3000
 ```
 
 ### Windows without Docker (PowerShell)
@@ -153,7 +155,7 @@ To use the terminal UI, leave the backend running and open another PowerShell
 window in the project directory:
 
 ```powershell
-.\target\release\tama-buddy.exe
+.\target\release\tama-buddy.exe --tui
 ```
 
 ### Move an existing pet
@@ -232,7 +234,7 @@ connect clients to its address:
 ```sh
 cargo run -- --server --db ./my-buddy.sqlite3 --bind 127.0.0.1:4000
 # In another terminal:
-cargo run -- --url http://127.0.0.1:4000
+cargo run -- --tui --url http://127.0.0.1:4000
 cargo run -- --status --url http://127.0.0.1:4000
 cargo run -- --help
 ```

@@ -171,7 +171,7 @@ class BackendTest(unittest.TestCase):
         import termios
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 32, 90, 0, 0))
-        process = subprocess.Popen([str(BINARY), '--url', self.url], stdin=slave,
+        process = subprocess.Popen([str(BINARY), '--tui', '--url', self.url], stdin=slave,
                                    stdout=slave, stderr=slave,
                                    env={**os.environ, 'TERM': 'xterm-256color'})
         os.close(slave)
